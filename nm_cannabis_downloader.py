@@ -72,8 +72,19 @@ def get_download_url(file_id: str) -> str | None:
     )
     resp.raise_for_status()
     data = resp.json()
-    # Typical response: {"status": "ok", "data": {"link": "https://..."}}
-    return data.get("data", {}).get("link")
+
+    # Handle multiple possible response shapes:
+    # 1. {"data": {"link": "https://..."}}
+    # 2. {"data": "https://..."}
+    # 3. "https://..." (raw string)
+    if isinstance(data, str):
+        return data
+    inner = data.get("data")
+    if isinstance(inner, str):
+        return inner
+    if isinstance(inner, dict):
+        return inner.get("link")
+    return None
 
 
 def safe_filename(name: str) -> str:
