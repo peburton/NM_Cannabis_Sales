@@ -2,7 +2,7 @@
 
 A React + Vite dashboard that queries NM cannabis sales data entirely in the browser using DuckDB WebAssembly. No backend, no API calls at runtime — just static files and client-side SQL.
 
-Live at: [your-url.vercel.app](https://your-url.vercel.app)
+Live at: [https://project-es7vc.vercel.app/](https://project-es7vc.vercel.app/)
 
 ---
 
