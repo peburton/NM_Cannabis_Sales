@@ -41,6 +41,14 @@ export default function App() {
     })();
   }, [dbLoading, dbError]);
 
+  function fmtStat(v) {
+    const n = Number(v);
+    if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+    if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+    if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+    return `$${n.toFixed(0)}`;
+}
+
   // Load summary stats
   useEffect(() => {
     if (!dataReady) return;
@@ -49,9 +57,9 @@ export default function App() {
         selectedYear === "all" ? "" : `WHERE year = ${selectedYear}`;
       const [totals] = await query(`
         SELECT
-          ROUND(SUM(total_sales) / 1e9, 2)    AS total_sales_m,
-          ROUND(SUM(medical_sales) / 1e9, 2)  AS medical_m,
-          ROUND(SUM(adult_use_sales) / 1e9, 2) AS adult_use_m,
+          ROUND(SUM(total_sales), 2)    AS total_sales_m,
+          ROUND(SUM(medical_sales), 2)  AS medical_m,
+          ROUND(SUM(adult_use_sales), 2) AS adult_use_m,
           COUNT(DISTINCT licensee)             AS licensee_count
         FROM licensee ${yearFilter}
       `);
@@ -97,19 +105,19 @@ export default function App() {
         <div className="stats-row">
           <StatCard
             label="Total Sales"
-            value={stats ? `$${stats.total_sales_m}B` : "—"}
+            value={stats ? fmtStat(stats.total_sales_m) : "—"}
             loading={!stats}
             accent="green"
           />
           <StatCard
             label="Adult-Use Sales"
-            value={stats ? `$${stats.adult_use_m}B` : "—"}
+            value={stats ? fmtStat(stats.adult_use_m) : "—"}
             loading={!stats}
             accent="teal"
           />
           <StatCard
             label="Medical Sales"
-            value={stats ? `$${stats.medical_m}B` : "—"}
+            value={stats ? fmtStat(stats.medical_m) : "—"}
             loading={!stats}
             accent="sage"
           />
