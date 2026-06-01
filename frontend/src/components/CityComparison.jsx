@@ -1,109 +1,110 @@
 import { useState, useEffect } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
+} from "recharts";
 
-export default function Leaderboard({ query, selectedYear }) {
-  const [rows, setRows] = useState([]);
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: "#1a1d1a", border: "1px solid #2a2e2a",
+      padding: "12px 16px", borderRadius: "4px",
+      fontFamily: "DM Mono, monospace", fontSize: "12px"
+    }}>
+      <p style={{ color: "#9aa89a", marginBottom: 8 }}>{label}</p>
+      {payload.map((p) => (
+        <p key={p.name} style={{ color: p.color, marginBottom: 4 }}>
+          {p.name}: ${p.value >= 1000 ? (p.value / 1000).toFixed(2) + 'B' : p.value.toFixed(1) + 'M'}
+        </p>
+      ))}
+    </div>
+  );
+};
+
+export default function CityComparison({ query, selectedYear }) {
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [metric, setMetric] = useState("total_sales");
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(15);
 
   useEffect(() => {
     setLoading(true);
     const yearFilter = selectedYear === "all" ? "" : `WHERE year = ${selectedYear}`;
     query(`
       SELECT
-        licensee,
         city,
-        state,
-        ROUND(SUM(total_sales), 2)     AS total_sales,
-        ROUND(SUM(medical_sales), 2)   AS medical_sales,
-        ROUND(SUM(adult_use_sales), 2) AS adult_use_sales
-      FROM licensee
+        ROUND(SUM(adult_use_sales) / 1e6, 2) AS adult_use,
+        ROUND(SUM(medical_sales) / 1e6, 2)   AS medical,
+        ROUND(SUM(total_sales) / 1e6, 2)     AS total
+      FROM city
       ${yearFilter}
-      GROUP BY licensee, city, state
-      ORDER BY ${metric} DESC
+      GROUP BY city
+      ORDER BY total DESC
       LIMIT ${limit}
-    `).then((data) => {
-      setRows(data);
+    `).then((rows) => {
+      setData(rows.map(r => ({
+        ...r,
+        adult_use: Number(r.adult_use),
+        medical: Number(r.medical),
+        total: Number(r.total),
+      })));
       setLoading(false);
     });
-  }, [query, selectedYear, metric, limit]);
-
-  const maxVal = rows.length > 0 ? Number(rows[0][metric]) : 1;
-
-  const fmt = (v) => {
-    const n = Number(v);
-    if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-    if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
-    return `$${n.toFixed(0)}`;
-  };
+  }, [query, selectedYear, limit]);
 
   if (loading) {
     return (
       <div className="loading-state">
         <div className="spinner" />
-        <p>Ranking licensees...</p>
+        <p>Aggregating city data...</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
-          <div className="section-title">Top Licensees</div>
-          <div className="section-sub">Ranked by sales volume</div>
+          <div className="section-title">Sales by City</div>
+          <div className="section-sub">Cumulative revenue · USD</div>
         </div>
-        <div className="leaderboard-controls">
-          <label>Sort by</label>
-          <select value={metric} onChange={(e) => setMetric(e.target.value)}>
-            <option value="total_sales">Total Sales</option>
-            <option value="adult_use_sales">Adult-Use Sales</option>
-            <option value="medical_sales">Medical Sales</option>
-          </select>
-          <label>Show</label>
-          <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
-            <option value={10}>Top 10</option>
-            <option value={20}>Top 20</option>
-            <option value={50}>Top 50</option>
-          </select>
-        </div>
+        <select
+          value={limit}
+          onChange={(e) => setLimit(Number(e.target.value))}
+          style={{
+            fontFamily: "DM Mono, monospace", fontSize: "12px",
+            background: "#1a1d1a", border: "1px solid #2a2e2a",
+            color: "#e8ede8", padding: "6px 10px", borderRadius: "4px", cursor: "pointer"
+          }}
+        >
+          <option value={10}>Top 10 Cities</option>
+          <option value={15}>Top 15 Cities</option>
+          <option value={25}>Top 25 Cities</option>
+        </select>
       </div>
 
-      <table className="lb-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Licensee</th>
-            <th>City</th>
-            <th className="right">Total Sales</th>
-            <th className="right">Adult-Use</th>
-            <th className="right">Medical</th>
-            <th className="lb-bar-cell"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i}>
-              <td className="lb-rank">{i + 1}</td>
-              <td style={{ maxWidth: 280, fontSize: 13 }}>{row.licensee}</td>
-              <td style={{ fontFamily: "DM Mono, monospace", fontSize: 12, color: "#9aa89a" }}>
-                {row.city}, {row.state}
-              </td>
-              <td className="right sales-green">{fmt(row.total_sales)}</td>
-              <td className="right" style={{ color: "#4caf72", opacity: 0.75 }}>{fmt(row.adult_use_sales)}</td>
-              <td className="right sales-teal">{fmt(row.medical_sales)}</td>
-              <td className="lb-bar-cell">
-                <div className="lb-bar-wrap">
-                  <div
-                    className="lb-bar-fill"
-                    style={{ width: `${(Number(row[metric]) / maxVal) * 100}%` }}
-                  />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ResponsiveContainer width="100%" height={420}>
+        <BarChart data={data} margin={{ top: 4, right: 16, left: 8, bottom: 80 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#2a2e2a" vertical={false} />
+          <XAxis
+            dataKey="city"
+            angle={-45}
+            textAnchor="end"
+            tick={{ fill: "#5a665a", fontFamily: "DM Mono", fontSize: 11 }}
+            interval={0}
+          />
+          <YAxis
+            tick={{ fill: "#5a665a", fontFamily: "DM Mono", fontSize: 11 }}
+            tickFormatter={(v) => v >= 1000 ? `$${(v / 1000).toFixed(1)}B` : `$${v}M`}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend
+            wrapperStyle={{ fontFamily: "DM Mono", fontSize: 11, color: "#9aa89a", paddingTop: 16 }}
+          />
+          <Bar dataKey="adult_use" name="Adult-Use" stackId="a" fill="#4caf72" radius={[0,0,0,0]} />
+          <Bar dataKey="medical"   name="Medical"   stackId="a" fill="#3db8a0" radius={[3,3,0,0]} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }

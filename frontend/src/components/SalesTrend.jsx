@@ -18,7 +18,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <p style={{ color: "#9aa89a", marginBottom: 8, letterSpacing: "0.05em" }}>{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color, marginBottom: 4 }}>
-          {p.name}: ${(p.value / 1e6).toFixed(1)}M
+          {p.name}: ${p.value >= 1000 ? (p.value / 1000).toFixed(2) + 'B' : p.value.toFixed(1) + 'M'}
         </p>
       ))}
     </div>
@@ -97,7 +97,7 @@ export default function SalesTrend({ query, selectedYear }) {
           />
           <YAxis
             tick={{ fill: "#5a665a", fontFamily: "DM Mono", fontSize: 11 }}
-            tickFormatter={(v) => `$${v}M`}
+            tickFormatter={(v) => v >= 1000 ? `$${(v / 1000).toFixed(1)}B` : `$${v}M`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend
