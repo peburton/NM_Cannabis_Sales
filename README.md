@@ -13,7 +13,6 @@ New Mexico's Regulation & Licensing Department publishes monthly cannabis sales 
 ---
 
 ## Architecture
-![Architecture](/Resources/)
 ```
 CROP Portal (NM RLD)
        │
@@ -43,7 +42,6 @@ The project has no backend server. No API keys exposed in the browser. The dashb
 ---
 
 ## Tech Stack
-![Tech Stack](/Resources/)
 
 | Layer | Tool | Why |
 |---|---|---|
@@ -60,7 +58,6 @@ The project has no backend server. No API keys exposed in the browser. The dashb
 ---
 
 ## Project Structure
-![File Structure](/Resources/)
 ```
 NM_Cannabis_Sales/
 ├── scripts/               # Python data pipeline
