@@ -23,7 +23,7 @@ export default function App() {
     [dataReady, query]
   );
 
-  // Register parquet files once DuckDB is ready
+  // Register parquet files once DuckDB is ready 
   useEffect(() => {
     if (dbLoading || dbError) return;
     (async () => {
