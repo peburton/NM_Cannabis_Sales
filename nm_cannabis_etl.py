@@ -22,7 +22,8 @@ import duckdb
 
 # ── Config ────────────────────────────────────────────────────────────────────
 RAW_DIR        = "data/raw"
-MOTHERDUCK_DB  = "nm_cannabis"   # will be created if it doesn't exist
+MOTHERDUCK_DB  = "nm_cannabis"   # The DB must be created manually in the MotherDuck web portal first
+                               # https://app.motherduck.com → New Database
 
 MONTH_MAP = {
     "january": 1, "february": 2, "march": 3,     "april": 4,
