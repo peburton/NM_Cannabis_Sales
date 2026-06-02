@@ -22,7 +22,7 @@ BASE_URL    = "https://klvg4oyd4j.execute-api.us-west-2.amazonaws.com/prod"
 WIDGET_ID   = "b9dd339b-de1d-406b-abaf-c30c1f3d783a"
 ACCOUNT_GUID = "1ee897135beb4b1c82715d36398de4c5"
 ROOT_FOLDER_ID = "9957fddd-766f-4333-af61-cc5e13e85951"
-
+"""
 # Known year folder IDs from the root listing (update as new years are added)
 YEAR_FOLDERS = {
     "2022": "fa7004d3-f466-482d-97b2-7b57648d8b6d",
@@ -31,7 +31,7 @@ YEAR_FOLDERS = {
     "2025": "dd39327e-357c-4576-8ee6-80cbdb42f5de",
     "2026": "e1433770-23dd-42d9-a249-f0063ccb99bb",
 }
-
+"""
 # Where to save downloaded files
 DOWNLOAD_DIR = "data/raw"
 
@@ -105,10 +105,10 @@ def main():
 
     # Optionally re-fetch year folders dynamically in case new years are added
     # (comment out YEAR_FOLDERS above and uncomment below)
-    # root_data = requests.get(f"{BASE_URL}/GetWidgetFiles",
-    #     params=get_common_params(ROOT_FOLDER_ID), timeout=15).json()
-    # year_folders = {f["name"]: f["folderId"]
-    #                 for f in root_data["data"]["folders"]}
+     root_data = requests.get(f"{BASE_URL}/GetWidgetFiles",
+         params=get_common_params(ROOT_FOLDER_ID), timeout=15).json()
+     year_folders = {f["name"]: f["folderId"]
+                     for f in root_data["data"]["folders"]}
 
     total_downloaded = 0
 
