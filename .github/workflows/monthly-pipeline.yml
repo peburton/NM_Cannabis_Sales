@@ -38,7 +38,7 @@ jobs:
           path: /data/raw  # Change this to your actual xlsx download directory
           key: cannabis-raw-data-${{ github.run_id }} # Creates a new cache point on success
           restore-keys: |
-            cannabis-raw-data-  # Falls back to the most recent successful cache
+            cannabis-raw-data-
 
       - name: Download new .xlsx files
         run: python scripts/nm_cannabis_downloader.py
