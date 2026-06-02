@@ -35,6 +35,14 @@ jobs:
       - name: Download new .xlsx files
         run: python scripts/nm_cannabis_downloader.py
 
+      - name: Cache raw Excel files
+        uses: actions/cache@v4
+        with:
+          path: /data/raw  # Change this to your actual xlsx download directory
+          key: cannabis-raw-data-${{ github.run_id }} # Creates a new cache point on success
+          restore-keys: |
+            cannabis-raw-data-  # Falls back to the most recent successful cache
+
       - name: Run ETL → MotherDuck
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
