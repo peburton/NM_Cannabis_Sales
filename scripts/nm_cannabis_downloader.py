@@ -107,7 +107,7 @@ def main():
     # (comment out YEAR_FOLDERS above and uncomment below)
     root_data = requests.get(f"{BASE_URL}/GetWidgetFiles",
     params=get_common_params(ROOT_FOLDER_ID), timeout=15).json()
-    year_folders = {f["name"]: f["folderId"]
+    YEAR_FOLDERS = {f["name"]: f["folderId"]
     for f in root_data["data"]["folders"]}
 
     total_downloaded = 0
