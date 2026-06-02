@@ -32,9 +32,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Download new .xlsx files
-        run: python scripts/nm_cannabis_downloader.py
-
       - name: Cache raw Excel files
         uses: actions/cache@v4
         with:
@@ -42,6 +39,9 @@ jobs:
           key: cannabis-raw-data-${{ github.run_id }} # Creates a new cache point on success
           restore-keys: |
             cannabis-raw-data-  # Falls back to the most recent successful cache
+
+      - name: Download new .xlsx files
+        run: python scripts/nm_cannabis_downloader.py
 
       - name: Run ETL → MotherDuck
         env:
