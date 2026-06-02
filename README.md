@@ -2,7 +2,7 @@
 
 A full-stack data pipeline and analytics dashboard tracking New Mexico cannabis market sales since legalization in 2022.
 
-Live at: [https://project-es7vc.vercel.app/](https://project-es7vc.vercel.app/)
+Live at: [your-url.vercel.app](https://your-url.vercel.app)
 
 ---
 
@@ -13,14 +13,15 @@ New Mexico's Regulation & Licensing Department publishes monthly cannabis sales 
 ---
 
 ## Architecture
+
 ```
-CROP Portal (NM RLD)
+GitHub Actions (runs on the 15th of every month)
        │
-       │  Public API (reverse engineered)
+       │  spins up a disposable Ubuntu VM
        ▼
 nm_cannabis_downloader.py
        │
-       │  .xlsx files → data/raw/<year>/
+       │  hits CROP public API → downloads .xlsx files to VM disk
        ▼
 nm_cannabis_etl.py
        │
@@ -28,16 +29,20 @@ nm_cannabis_etl.py
        ▼
 nm_cannabis_export.py
        │
-       │  DuckDB → .parquet files → frontend/public/data/
+       │  MotherDuck → .parquet files → frontend/public/data/
        ▼
-React + Vite (frontend)
+git commit + push (parquet files only)
+       │
+       │  VM is destroyed — .xlsx files are gone
+       ▼
+Vercel (auto-deploys on push to main)
        │
        │  DuckDB WASM queries parquet files in the browser
        ▼
-Vercel (static hosting)
+React + Vite dashboard
 ```
 
-The project has no backend server. No API keys exposed in the browser. The dashboard queries parquet files directly in the browser via DuckDB WebAssembly.
+No backend server. No API keys exposed in the browser. The raw `.xlsx` files never touch the repo — they live briefly on the GitHub Actions runner during each pipeline run, then disappear. Only the Parquet files are committed.
 
 ---
 
@@ -53,27 +58,25 @@ The project has no backend server. No API keys exposed in the browser. The dashb
 | Frontend | React + Vite | Component-based UI, fast dev experience |
 | Charting | Recharts | Composable React charts |
 | In-browser SQL | DuckDB WASM | Queries parquet files client-side, zero latency |
-| Hosting | Vercel | Free static hosting with custom domain support |
+| CI/CD | GitHub Actions | Automated monthly pipeline on a disposable runner |
+| Hosting | Vercel | Free static hosting, auto-deploys on push |
 
 ---
 
 ## Project Structure
+
 ```
 NM_Cannabis_Sales/
-├── scripts/               # Python data pipeline
+├── .github/
+│   └── workflows/
+│       └── monthly-pipeline.yml  # automated data pipeline
+├── scripts/                      # Python data pipeline
 │   ├── nm_cannabis_downloader.py
 │   ├── nm_cannabis_etl.py
 │   └── nm_cannabis_export.py
-├── data/
-│   └── raw/               # Downloaded .xlsx files (gitignored)
-│       ├── 2022/
-│       ├── 2023/
-│       ├── 2024/
-│       ├── 2025/
-│       └── 2026/
-├── frontend/              # React dashboard
+├── frontend/                     # React dashboard
 │   ├── public/
-│   │   └── data/          # Parquet files served statically
+│   │   └── data/                 # Parquet files served statically
 │   ├── src/
 │   │   ├── components/
 │   │   ├── hooks/
@@ -81,7 +84,8 @@ NM_Cannabis_Sales/
 │   │   └── App.css
 │   ├── vercel.json
 │   └── vite.config.js
-└── venv/                  # Python virtual environment (gitignored)
+├── requirements.txt              # Python dependencies
+└── venv/                         # Python virtual environment (gitignored)
 ```
 
 ---
@@ -111,10 +115,10 @@ python scripts/nm_cannabis_downloader.py
 
 ### 3. Load into MotherDuck
 
-Create a database called `nm_cannabis` in the [MotherDuck web portal](https://app.motherduck.com), also create an access token then:
+Create a database called `nm_cannabis` in the [MotherDuck web portal](https://app.motherduck.com), then:
 
 ```bash
-export MOTHERDUCK_TOKEN="your_token_here"
+export MOTHERDUCK_TOKEN=your_token_here
 python scripts/nm_cannabis_etl.py
 ```
 
@@ -138,21 +142,25 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Monthly Update Workflow
 
-When NM publishes new data (usually mid-month):
+Data updates are fully automated via GitHub Actions. On the 15th of every month a disposable Ubuntu runner:
 
-```bash
-source venv/bin/activate.fish
-export MOTHERDUCK_TOKEN=your_token_here
-python scripts/nm_cannabis_downloader.py
-python scripts/nm_cannabis_etl.py
-python scripts/nm_cannabis_export.py
+1. Downloads any new `.xlsx` files from the CROP portal
+2. Normalizes and loads them into MotherDuck
+3. Exports updated Parquet files
+4. Commits the Parquet files to `main` and destroys itself
+5. Vercel detects the push and auto-redeploys the dashboard
 
-git add frontend/public/data/
-git commit -m "data: add <month> <year> sales data"
-git push origin main
-```
+You can also trigger a manual run anytime from the **Actions** tab in your GitHub repo.
 
-Vercel auto-deploys on push to `main`.
+To set up the automation on a fresh clone, add your MotherDuck token as a GitHub secret:
+
+**Repo → Settings → Secrets and variables → Actions → New repository secret**
+- Name: `MOTHERDUCK_TOKEN`
+- Value: your token from [app.motherduck.com](https://app.motherduck.com)
+
+Also ensure workflow write permissions are enabled:
+
+**Repo → Settings → Actions → General → Workflow permissions → Read and write permissions**
 
 ---
 
