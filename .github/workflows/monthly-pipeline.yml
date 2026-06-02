@@ -1,0 +1,59 @@
+name: Monthly Data Pipeline
+
+on:
+  schedule:
+    - cron: '0 14 15 * *'  # 15th of every month at 14:00 UTC (8am MT)
+  workflow_dispatch:        # allow manual trigger from GitHub Actions UI
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download new .xlsx files
+        run: python scripts/nm_cannabis_downloader.py
+
+      - name: Run ETL → MotherDuck
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python scripts/nm_cannabis_etl.py
+
+      - name: Export Parquet files
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: python scripts/nm_cannabis_export.py
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet frontend/public/data/ || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push updated Parquet files
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/data/
+          git commit -m "data: automated update $(date +'%B %Y')"
+          git push
