@@ -5,6 +5,7 @@ export default function Leaderboard({ query, selectedYear }) {
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState("total_sales");
   const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -28,7 +29,13 @@ export default function Leaderboard({ query, selectedYear }) {
     });
   }, [query, selectedYear, metric, limit]);
 
-  const maxVal = rows.length > 0 ? Number(rows[0][metric]) : 1;
+
+  const filteredRows = rows.filter(row=>
+    row.licensee?.toLowerCase().includes(search.toLowerCase()) ||
+    row.city?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const maxVal = filteredRows.length > 0 ? Number(filteredRows[0][metric]) : 1;
 
   const fmt = (v) => {
     const n = Number(v);
@@ -55,6 +62,22 @@ export default function Leaderboard({ query, selectedYear }) {
           <div className="section-sub">Ranked by sales volume</div>
         </div>
         <div className="leaderboard-controls">
+          <input
+            type="text"
+            placeholder="Search licensee or city..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              fontFamily: "DM Mono, monospace",
+              fontSize: "12px",
+              background: "#1a1d1a",
+              border: "1px solid #2a2e2a",
+              color: "#e8ede8",
+              padding: "6px 10px",
+              borderRadius: "4px",
+              width: "220px",
+            }}
+          />
           <label>Sort by</label>
           <select value={metric} onChange={(e) => setMetric(e.target.value)}>
             <option value="total_sales">Total Sales</option>
@@ -69,7 +92,12 @@ export default function Leaderboard({ query, selectedYear }) {
           </select>
         </div>
       </div>
-
+      
+      {search && (
+        <p style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: "#5a665a", marginBottom: 12 }}>
+          {filteredRows.length} result{filteredRows.length !== 1 ? "s" : ""} for "{search}"
+        </p>
+      )}
       <table className="lb-table">
         <thead>
           <tr>
@@ -83,7 +111,7 @@ export default function Leaderboard({ query, selectedYear }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
+          {filteredRows.map((row, i) => (
             <tr key={i}>
               <td className="lb-rank">{i + 1}</td>
               <td style={{ maxWidth: 280, fontSize: 13 }}>{row.licensee}</td>
@@ -107,4 +135,4 @@ export default function Leaderboard({ query, selectedYear }) {
       </table>
     </div>
   );
-}
+};

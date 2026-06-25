@@ -82,9 +82,9 @@ export default function App() {
       <header className="header">
         <div className="header-inner">
           <div className="header-title">
-            <span className="header-eyebrow">New Mexico</span>
-            <h1>Cannabis Market</h1>
-            <span className="header-sub">Sales Intelligence Dashboard</span>
+            <span className="header-eyebrow"></span>
+            <h1>New Mexico Cannabis Market</h1>
+            <span className="header-sub"></span>
           </div>
           <div className="year-filter">
             {years.map((y) => (
