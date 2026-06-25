@@ -2,7 +2,7 @@
 
 A full-stack data pipeline and analytics dashboard tracking New Mexico cannabis market sales since legalization in 2022.
 
-Live at: [your-url.vercel.app](https://your-url.vercel.app)
+Live at: [https://project-es7vc.vercel.app/](https://project-es7vc.vercel.app)
 
 ---
 
